@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FD &amp; DPS Calculator — Bangladesh</title>
+<meta name="description" content="Fixed Deposit and DPS calculator for Bangladeshi banks. Compare real bank rates, estimate maturity value and after-tax interest.">
+<style>
+:root{
+  --navy:#0a1628; --navy2:#0e1f3a; --navy3:#13294b; --card:#12233f;
+  --gold:#d4af37; --gold2:#f0c94a; --emerald:#2fbf8f; --emerald2:#34d399;
+  --text:#e8eef7; --muted:#9fb0c7; --line:#23395e; --danger:#f87171;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:radial-gradient(1200px 600px at 50% -10%, #16305a 0%, var(--navy) 55%) fixed, var(--navy);
+  color:var(--text); font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+  line-height:1.55; min-height:100vh;
+}
+.wrap{max-width:960px;margin:0 auto;padding:0 16px 48px}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ---------- Hero / vault door ---------- */
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:36px 0 8px}
+.vault{
+  width:150px;height:150px;border-radius:50%;position:relative;flex:none;
+  background:radial-gradient(circle at 35% 30%, #2a4a7d, #12233f 60%, #0a1628);
+  border:6px solid #31456e; box-shadow:0 0 0 4px #0a1628, 0 0 0 6px var(--gold), 0 18px 40px rgba(0,0,0,.55), inset 0 0 30px rgba(0,0,0,.6);
+  animation:spinSlow 60s linear infinite;
+}
+.vault::before{content:"";position:absolute;inset:18px;border-radius:50%;border:3px solid #31456e;background:radial-gradient(circle at 40% 35%, #1d3a66, #0e1f3a)}
+.vault::after{content:"";position:absolute;inset:0;border-radius:50%;
+  background:
+    radial-gradient(circle at 50% 50%, var(--gold) 0 7px, #8a6d1f 7px 10px, transparent 11px),
+    repeating-conic-gradient(from 0deg, #d4af37 0deg 4deg, transparent 4deg 60deg);
+  -webkit-mask:radial-gradient(circle, transparent 0 58px, #000 59px);
+          mask:radial-gradient(circle, transparent 0 58px, #000 59px);
+}
+@keyframes spinSlow{to{transform:rotate(360deg)}}
+.hero h1{font-size:clamp(1.7rem,5.5vw,2.6rem);letter-spacing:.5px;margin-top:20px;line-height:1.2}
+.hero h1 span{color:var(--gold2)}
+.hero p{color:var(--muted);max-width:620px;margin-top:8px;font-size:1rem}
+.badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+.badge{border:1px solid var(--line);background:rgba(18,35,63,.7);color:var(--muted);
+  padding:4px 12px;border-radius:999px;font-size:.82rem}
+.badge b{color:var(--emerald2);font-weight:600}
+
+/* ---------- Tabs ---------- */
+.tabs{display:flex;gap:8px;margin:26px 0 0;flex-wrap:wrap}
+.tab{flex:1;min-width:110px;padding:12px 10px;border-radius:12px 12px 0 0;border:1px solid var(--line);
+  border-bottom:none;background:var(--navy2);color:var(--muted);font-size:1rem;font-weight:600;cursor:pointer}
+.tab.active{background:var(--card);color:var(--gold2);border-color:var(--gold)}
+.tab:hover{color:var(--text)}
+
+/* ---------- Cards / forms ---------- */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:0 0 14px 14px;
+  border-top:1px solid var(--gold);padding:22px 20px 26px;box-shadow:0 12px 32px rgba(0,0,0,.35)}
+.panel h2{font-size:1.25rem;margin-bottom:4px}
+.panel .sub{color:var(--muted);font-size:.92rem;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field.full{grid-column:1 / -1}
+label{font-size:.88rem;color:var(--muted);font-weight:600}
+input,select{
+  background:#0b1a30;border:1px solid var(--line);color:var(--text);border-radius:9px;
+  padding:11px 12px;font-size:1rem;width:100%;font-variant-numeric:tabular-nums;
+}
+input:focus,select:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold)}
+input[type=range]{padding:0;accent-color:var(--gold)}
+.hint{font-size:.8rem;color:var(--muted)}
+.btn{
+  display:inline-block;background:linear-gradient(135deg,var(--gold),#b8922a);color:#101a2c;border:none;
+  border-radius:10px;padding:13px 26px;font-size:1.02rem;font-weight:700;cursor:pointer;margin-top:18px;
+  box-shadow:0 6px 18px rgba(212,175,55,.25);
+}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted);box-shadow:none;font-weight:600}
+.btn.small{padding:8px 14px;font-size:.88rem;margin-top:0}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;padding:10px;border-radius:9px;border:1px solid var(--line);background:#0b1a30;color:var(--muted);cursor:pointer;font-size:.95rem}
+.seg button.on{border-color:var(--emerald);color:var(--emerald2);background:rgba(47,191,143,.12)}
+
+/* ---------- Results ---------- */
+.result{margin-top:22px;border:1px solid var(--line);border-radius:12px;padding:18px;
+  background:linear-gradient(180deg,#10233f,#0d1c33);display:none}
+.result.show{display:block}
+.big-label{font-size:.85rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.big-value{font-size:clamp(1.9rem,7vw,2.7rem);font-weight:800;color:var(--gold2);line-height:1.15;
+  font-variant-numeric:tabular-nums}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-top:14px}
+.kv div{border-top:1px dashed var(--line);padding-top:8px}
+.kv .k{font-size:.83rem;color:var(--muted)}
+.kv .v{font-size:1.08rem;font-weight:700;font-variant-numeric:tabular-nums}
+.kv .v.green{color:var(--emerald2)}
+.formula{margin-top:14px;background:#0b1a30;border:1px solid var(--line);border-radius:9px;
+  padding:10px 12px;font-size:.88rem;color:var(--muted);overflow-x:auto;white-space:nowrap}
+.formula b{color:var(--text)}
+.taxnote{margin-top:10px;font-size:.86rem;color:#e5c97a;background:rgba(212,175,55,.08);
+  border:1px solid rgba(212,175,55,.3);border-radius:9px;padding:9px 12px}
+
+/* ---------- Chart ---------- */
+#dpsChart{width:100%;height:220px;display:block;margin-top:14px;background:#0b1a30;border:1px solid var(--line);border-radius:10px}
+.legend{font-size:.82rem;color:var(--muted);margin-top:6px}
+
+/* ---------- Tables ---------- */
+table{width:100%;border-collapse:collapse;font-size:.92rem;margin-top:10px}
+th,td{padding:9px 8px;text-align:left;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+th{color:var(--muted);font-size:.82rem;text-transform:uppercase;letter-spacing:.5px}
+td.rate{color:var(--emerald2);font-weight:700}
+tr.best td{background:rgba(47,191,143,.09)}
+tr.best td:first-child{border-left:3px solid var(--emerald)}
+.tag{display:inline-block;font-size:.72rem;padding:2px 8px;border-radius:999px;background:rgba(47,191,143,.15);color:var(--emerald2);margin-left:6px;font-weight:700}
+.scroll-x{overflow-x:auto}
+.section{margin-top:34px}
+.section h2{font-size:1.3rem;margin-bottom:4px}
+.section .sub{color:var(--muted);font-size:.92rem;margin-bottom:10px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+.note{font-size:.86rem;color:var(--muted);margin-top:10px}
+.note b{color:#e5c97a}
+
+/* ---------- History ---------- */
+.hist-item{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;background:#0d1c33}
+.hist-item .t{font-size:.9rem}
+.hist-item .t small{color:var(--muted);display:block;font-size:.8rem}
+.hist-item .amt{font-weight:700;color:var(--gold2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.hist-item .acts{display:flex;gap:6px;flex:none}
+.icon-btn{background:#0b1a30;border:1px solid var(--line);color:var(--text);border-radius:8px;
+  padding:6px 10px;cursor:pointer;font-size:.82rem}
+.icon-btn:hover{border-color:var(--gold);color:var(--gold2)}
+.empty{color:var(--muted);font-size:.9rem;margin-top:8px}
+
+/* ---------- Disclaimer / footer ---------- */
+.disclaimer{margin-top:34px;border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.07);
+  border-radius:12px;padding:16px 18px;font-size:.9rem}
+.disclaimer h3{color:#fca5a5;font-size:1rem;margin-bottom:6px}
+.disclaimer li{margin-left:18px;color:var(--muted)}
+footer{text-align:center;color:var(--muted);font-size:.88rem;margin-top:30px;padding-top:16px;border-top:1px solid var(--line)}
+footer b{color:var(--gold2)}
+
+@media (max-width:560px){
+  .grid,.kv{grid-template-columns:1fr}
+  .panel{padding:18px 14px 22px}
+  th,td{padding:8px 5px;font-size:.85rem}
+  .vault{width:120px;height:120px}
+}
+#testout{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="vault" aria-hidden="true"></div>
+    <h1>FD &amp; DPS Calculator <span>Bangladesh</span></h1>
+    <p>Work out what your Fixed Deposit or monthly DPS will really be worth — with tax, and side-by-side against real Bangladeshi bank rates.</p>
+    <div class="badges">
+      <span class="badge">Rates: <b>Indicative, Nov 2026</b></span>
+      <span class="badge">TDS: <b>10% with TIN · 15% without</b></span>
+      <span class="badge">100% free · runs in your browser</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Calculator modes">
+    <button class="tab active" id="tab-fd" role="tab" onclick="showTab('fd')">Fixed Deposit (FD)</button>
+    <button class="tab" id="tab-dps" role="tab" onclick="showTab('dps')">DPS (Monthly)</button>
+    <button class="tab" id="tab-compare" role="tab" onclick="showTab('compare')">Compare Banks</button>
+  </nav>
+
+  <!-- ============ FD ============ -->
+  <section class="panel" id="panel-fd" role="tabpanel">
+    <h2>Fixed Deposit calculator</h2>
+    <p class="sub">One lump sum, locked for a fixed tenure. Interest compounds at the frequency you choose.</p>
+    <div class="grid">
+      <div class="field">
+        <label for="fdAmount">Deposit amount (৳)</label>
+        <input type="number" id="fdAmount" min="1000" step="500" value="100000" inputmode="numeric">
+        <span class="hint">Minimum varies by bank — usually ৳10,000+</span>
+      </div>
+      <div class="field">
+        <label for="fdRate">Annual interest rate (%)</label>
+        <input type="number" id="fdRate" min="0" max="20" step="0.05" value="8" inputmode="decimal">
+        <span class="hint">Pick a rate from the bank table below, or type your own.</span>
+      </div>
+      <div class="field">
+        <label for="fdTenure">Tenure</label>
+        <input type="number" id="fdTenure" min="1" max="120" step="1" value="12" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="fdTenureUnit">Tenure unit</label>
+        <select id="fdTenureUnit">
+          <option value="months" selected>Months</option>
+          <option value="years">Years</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>Compounding</label>
+        <div class="seg" id="fdCompSeg">
+          <button type="button" data-comp="12">Monthly</button>
+          <button type="button" data-comp="4">Quarterly</button>
+          <button type="button" data-comp="1" class="on">Annually</button>
+        </div>
+      </div>
+      <div class="field full">
+        <label>e-TIN / tax status</label>
+        <div class="seg" id="fdTaxSeg">
+          <button type="button" data-tax="0.10" class="on">I have e-TIN — 10% TDS</button>
+          <button type="button" data-tax="0.15">No TIN — 15% TDS</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn" onclick="calcFD()">Calculate maturity</button>
+    <button class="btn ghost" onclick="saveCurrent('fd')">Save this calculation</button>
+
+    <div class="result" id="fdResult" aria-live="polite">
+      <div class="big-label">Maturity value</div>
+      <div class="big-value num" id="fdMaturity">৳0</div>
+      <div class="kv">
+        <div><div class="k">Deposit</div><div class="v num" id="fdDep">—</div></div>
+        <div><div class="k">Total interest (before tax)</div><div class="v green num" id="fdInt">—</div></div>
+        <div><div class="k">TDS deducted</div><div class="v num" id="fdTds">—</div></div>
+        <div><div class="k">After-tax interest</div><div class="v green num" id="fdAfterTax">—</div></div>
+        <div><div class="k">You receive after tax</div><div class="v num" id="fdNet">—</div></div>
+        <div><div class="k">Effective annual return</div><div class="v num" id="fdEff">—</div></div>
+      </div>
+      <div class="formula" id="fdFormula"></div>
+      <div class="taxnote">Tax note: Bangladesh banks deduct Tax Deducted at Source (TDS) on FD interest — <b>10% if you submit an e-TIN certificate, 15% without</b>. Excise duty may also apply on the balance (exempt up to ৳4,00,000 a year). Figures above are estimates.</div>
+    </div>
+  </section>
+
+  <!-- ============ DPS ============ -->
+  <section class="panel" id="panel-dps" role="tabpanel" hidden>
+    <h2>DPS calculator</h2>
+    <p class="sub">Deposit a fixed amount every month. Each instalment starts earning interest from the month you pay it.</p>
+    <div class="grid">
+      <div class="field">
+        <label for="dpsMonthly">Monthly deposit (৳)</label>
+        <input type="number" id="dpsMonthly" min="500" step="100" value="5000" inputmode="numeric">
+        <span class="hint">Most banks: ৳500 – ৳50,000 per month</span>
+      </div>
+      <div class="field">
+        <label for="dpsRate">Annual interest rate (%)</label>
+        <input type="number" id="dpsRate" min="0" max="20" step="0.05" value="8" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label for="dpsTenure">Tenure</label>
+        <input type="number" id="dpsTenure" min="1" max="120" step="1" value="12" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="dpsTenureUnit">Tenure unit</label>
+        <select id="dpsTenureUnit">
+          <option value="months" selected>Months</option>
+          <option value="years">Years</option>
+        </select>
+      </div>
+      <div class="field full">
+        <label>e-TIN / tax status</label>
+        <div class="seg" id="dpsTaxSeg">
+          <button type="button" data-tax="0.10" class="on">I have e-TIN — 10% TDS</button>
+          <button type="button" data-tax="0.15">No TIN — 15% TDS</button>
+        </div>
+      </div>
+    </div>
+    <button class="btn" onclick="calcDPS()">Calculate maturity</button>
+    <button class="btn ghost" onclick="saveCurrent('dps')">Save this calculation</button>
+
+    <div class="result" id="dpsResult" aria-live="polite">
+      <div class="big-label">Maturity value</div>
+      <div class="big-value num" id="dpsMaturity">৳0</div>
+      <div class="kv">
+        <div><div class="k">Total deposited</div><div class="v num" id="dpsDep">—</div></div>
+        <div><div class="k">Total interest (before tax)</div><div class="v green num" id="dpsInt">—</div></div>
+        <div><div class="k">TDS deducted</div><div class="v num" id="dpsTds">—</div></div>
+        <div><div class="k">After-tax interest</div><div class="v green num" id="dpsAfterTax">—</div></div>
+        <div><div class="k">You receive after tax</div><div class="v num" id="dpsNet">—</div></div>
+        <div><div class="k">Instalments</div><div class="v num" id="dpsN">—</div></div>
+      </div>
+      <div class="formula" id="dpsFormula"></div>
+      <div class="taxnote">Tax note: TDS on DPS profit is <b>10% with e-TIN, 15% without</b>. The chart below shows your balance growing month by month (before tax).</div>
+      <canvas id="dpsChart" width="880" height="220" aria-label="Monthly balance growth chart"></canvas>
+      <div class="legend">Balance growth over time — gold line = balance, green area = your deposits, the gap is interest earned.</div>
+    </div>
+  </section>
+
+  <!-- ============ COMPARE ============ -->
+  <section class="panel" id="panel-compare" role="tabpanel" hidden>
+    <h2>Compare banks</h2>
+    <p class="sub">Enter your deposit once and see what each bank would pay at its advertised rate — best first.</p>
+    <div class="grid">
+      <div class="field">
+        <label for="cmpAmount">Amount (৳)</label>
+        <input type="number" id="cmpAmount" min="1000" step="500" value="100000" inputmode="numeric">
+        <span class="hint">For DPS mode this is the monthly deposit.</span>
+      </div>
+      <div class="field">
+        <label for="cmpTenure">Tenure</label>
+        <input type="number" id="cmpTenure" min="1" max="120" step="1" value="12" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label for="cmpTenureUnit">Tenure unit</label>
+        <select id="cmpTenureUnit">
+          <option value="months" selected>Months</option>
+          <option value="years">Years</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="cmpMode">Compare as</label>
+        <select id="cmpMode">
+          <option value="fd" selected>Fixed Deposit (lump sum)</option>
+          <option value="dps">DPS (monthly deposit)</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="calcCompare()">Compare banks</button>
+    <div class="result" id="cmpResult" aria-live="polite">
+      <div class="scroll-x">
+        <table id="cmpTable">
+          <thead><tr><th>#</th><th>Bank</th><th>Rate (p.a.)</th><th>Maturity value</th><th>Interest</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="note">FD comparison uses annual compounding; DPS comparison uses monthly compounding with the instalment paid at the start of each month. Banks with no verified rate for this product are left out of the ranking — see the full rate table below.</p>
+    </div>
+  </section>
+
+  <!-- ============ RATE TABLE ============ -->
+  <section class="section">
+    <h2>Bank rates — indicative, Nov 2026</h2>
+    <p class="sub">Real advertised rates found in official rate sheets and Bangladesh Bank's announced deposit-rate chart (Oct 2026). Rates change often — <b>confirm with the bank before investing</b>.</p>
+    <div class="card scroll-x">
+      <table>
+        <thead><tr><th>Bank</th><th>FD rate (p.a.)</th><th>DPS rate (p.a.)</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td><b>Islami Bank Bangladesh</b></td><td class="rate">10.00%</td><td>—</td><td>FD 1–2 yr, Mudaraba profit rate (Bangladesh Bank, Oct 2026)</td></tr>
+          <tr><td><b>IFIC Bank</b></td><td class="rate">8.50%</td><td>—</td><td>FD 8.25–8.75% range (Bangladesh Bank, Oct 2026); midpoint shown</td></tr>
+          <tr><td><b>Dutch-Bangla Bank (DBBL)</b></td><td class="rate">7.20%</td><td class="rate">8.50%</td><td>FD 12–36 mo (individual); DPS Deposit Plus Scheme, official site, Oct 2026</td></tr>
+          <tr><td><b>BRAC Bank</b></td><td class="rate">7.50%</td><td class="rate">7.00%</td><td>FD 12 mo, ৳1 lac–&lt;1 cr; DPS 1-yr — ALCO Circular 2026/11, eff. 15 Oct 2026</td></tr>
+          <tr><td><b>Sonali Bank</b></td><td class="rate">7.10%</td><td>—</td><td>FD 1–2 yr (Bangladesh Bank, Oct 2026)</td></tr>
+          <tr><td><b>ONE Bank</b></td><td>—</td><td class="rate">10.00%</td><td>DPS 3-yr schemes, eff. 3 Nov 2026 (published schedule)</td></tr>
+        </tbody>
+      </table>
+      <p class="note">“—” means no rate for that product could be verified from an official source in Nov 2026 — it is <b>not</b> zero. Sources: BRAC Bank ALCO Circular 2026/11 (15 Oct 2026); DBBL official term-deposit page; IFIC Islamic deposit rates (16 Aug 2026); Bangladesh Bank announced deposit-rate chart, Oct 2026; ONE Bank DPS schedule (3 Nov 2026). Islamic banks pay a <i>profit rate</i>, not interest — the expected rate can vary.</p>
+    </div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section class="section">
+    <h2>Saved calculations</h2>
+    <p class="sub">Stored only in this browser (localStorage). Nothing is sent anywhere.</p>
+    <div class="card">
+      <div id="histList"></div>
+      <button class="btn ghost small" onclick="clearHistory()" style="margin-top:12px">Clear all saved</button>
+    </div>
+  </section>
+
+  <!-- ============ DISCLAIMER ============ -->
+  <div class="disclaimer">
+    <h3>Please read before you invest</h3>
+    <ul>
+      <li>All results here are <b>estimates</b>, not a promise of returns. Banks change rates without notice.</li>
+      <li>Rates in the table are indicative for Nov 2026 — always confirm the current rate, minimum deposit and tenure rules at the branch or official website.</li>
+      <li>Interest/profit is taxed at source (10% with e-TIN, 15% without). Excise duty may also apply on large balances.</li>
+      <li>Islamic banks pay an expected profit rate under Mudaraba — the actual rate may differ from the indicative one.</li>
+      <li>This tool is for education only and is not financial advice.</li>
+    </ul>
+  </div>
+
+  <footer>Built by <b>Nafiz Bin Azad</b> · FD &amp; DPS Calculator BD · Rates indicative, Nov 2026</footer>
+</div>
+
+<div id="testout" aria-hidden="true"></div>
+
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+function $(id){ return document.getElementById(id); }
+function num(id, fb){ var v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : fb; }
+
+/* Bangladesh-style grouping: 1,00,000 / 1,00,00,000 (last 3 digits, then pairs) */
+function fmt(n){
+  n = Math.round(n);
+  var neg = n < 0; n = Math.abs(n);
+  var s = String(n);
+  if (s.length <= 3) return (neg ? "-৳" : "৳") + s;
+  var last3 = s.slice(-3), rest = s.slice(0, -3), parts = [];
+  while (rest.length > 2){ parts.unshift(rest.slice(-2)); rest = rest.slice(0, -2); }
+  if (rest) parts.unshift(rest);
+  return (neg ? "-৳" : "৳") + parts.join(",") + "," + last3;
+}
+function fmtInt(n){ return fmt(n); }
+function monthsOf(valId, unitId){
+  var v = num(valId, 12);
+  return $(unitId).value === "years" ? Math.round(v * 12) : Math.round(v);
+}
+
+/* segmented controls */
+function segInit(segId, attr, stateKey){
+  var seg = $(segId);
+  seg.addEventListener("click", function(e){
+    var b = e.target.closest("button"); if (!b) return;
+    seg.querySelectorAll("button").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    window[stateKey] = parseFloat(b.dataset[attr]);
+  });
+}
+window.fdComp = 1; window.fdTax = 0.10; window.dpsTax = 0.10;
+segInit("fdCompSeg", "comp", "fdComp");
+segInit("fdTaxSeg", "tax", "fdTax");
+segInit("dpsTaxSeg", "tax", "dpsTax");
+
+/* count-up animation */
+function countUp(el, target){
+  var start = null, dur = 700, from = 0;
+  function step(ts){
+    if (!start) start = ts;
+    var p = Math.min((ts - start) / dur, 1);
+    var eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = fmt(from + (target - from) * eased);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+/* ---------- tabs ---------- */
+function showTab(name){
+  ["fd","dps","compare"].forEach(function(n){
+    $("panel-" + n).hidden = (n !== name);
+    $("tab-" + n).classList.toggle("active", n === name);
+  });
+}
+
+/* ---------- FD ---------- */
+var lastFD = null, lastDPS = null;
+function calcFD(){
+  var P = num("fdAmount", 100000);
+  var rate = num("fdRate", 8) / 100;
+  var months = monthsOf("fdTenure", "fdTenureUnit");
+  var n = window.fdComp;                 /* compounding periods per year */
+  var years = months / 12;
+  var maturity = P * Math.pow(1 + rate / n, n * years);
+  var interest = maturity - P;
+  var tds = interest * window.fdTax;
+  var afterTax = interest - tds;
+  lastFD = { type:"FD", amount:P, rate:rate*100, months:months, comp:n,
+             maturity:maturity, interest:interest, afterTax:afterTax };
+  $("fdResult").classList.add("show");
+  countUp($("fdMaturity"), maturity);
+  $("fdDep").textContent = fmt(P);
+  $("fdInt").textContent = fmt(interest);
+  $("fdTds").textContent = "− " + fmt(tds) + " (" + Math.round(window.fdTax*100) + "% TDS)";
+  $("fdAfterTax").textContent = fmt(afterTax);
+  $("fdNet").textContent = fmt(P + afterTax);
+  $("fdEff").textContent = ((Math.pow(1 + rate / n, n) - 1) * 100).toFixed(2) + "% p.a.";
+  var compName = n === 12 ? "monthly" : n === 4 ? "quarterly" : "annually";
+  $("fdFormula").innerHTML = "<b>Formula:</b> Maturity = P × (1 + r/n)<sup>nt</sup> = " +
+    fmt(P) + " × (1 + " + (rate*100).toFixed(2) + "%/" + n + ")<sup>" + n + " × " + years.toFixed(2) +
+    " yr</sup> &nbsp;·&nbsp; " + compName + " compounding, " + months + " months";
+  return lastFD;
+}
+
+/* ---------- DPS ---------- */
+/* Instalment paid at the START of each month (annuity due) — standard BD DPS practice. */
+function dpsSeries(monthly, ratePct, months){
+  var i = ratePct / 100 / 12, bal = 0, series = [];
+  for (var m = 1; m <= months; m++){ bal = (bal + monthly) * (1 + i); series.push(bal); }
+  return series;
+}
+function calcDPS(){
+  var monthly = num("dpsMonthly", 5000);
+  var rate = num("dpsRate", 8);
+  var months = monthsOf("dpsTenure", "dpsTenureUnit");
+  var series = dpsSeries(monthly, rate, months);
+  var maturity = series.length ? series[series.length - 1] : 0;
+  var deposited = monthly * months;
+  var interest = maturity - deposited;
+  var tds = interest * window.dpsTax;
+  var afterTax = interest - tds;
+  lastDPS = { type:"DPS", amount:monthly, rate:rate, months:months,
+              maturity:maturity, interest:interest, afterTax:afterTax, deposited:deposited };
+  $("dpsResult").classList.add("show");
+  countUp($("dpsMaturity"), maturity);
+  $("dpsDep").textContent = fmt(deposited);
+  $("dpsInt").textContent = fmt(interest);
+  $("dpsTds").textContent = "− " + fmt(tds) + " (" + Math.round(window.dpsTax*100) + "% TDS)";
+  $("dpsAfterTax").textContent = fmt(afterTax);
+  $("dpsNet").textContent = fmt(deposited + afterTax);
+  $("dpsN").textContent = months + " instalments × " + fmt(monthly);
+  $("dpsFormula").innerHTML = "<b>Formula:</b> Maturity = P × [((1 + r/12)<sup>n</sup> − 1) / (r/12)] × (1 + r/12), " +
+    "P = " + fmt(monthly) + "/month, r = " + rate.toFixed(2) + "%, n = " + months + " months (instalment at start of each month)";
+  drawChart(series, deposited);
+  return lastDPS;
+}
+function drawChart(series, deposited){
+  var c = $("dpsChart"), ctx = c.getContext("2d");
+  var W = c.width, H = c.height, padL = 8, padR = 8, padT = 14, padB = 22;
+  ctx.clearRect(0, 0, W, H);
+  if (!series.length) return;
+  var max = series[series.length - 1] * 1.05;
+  var x0 = padL, x1 = W - padR, y0 = H - padB, y1 = padT;
+  function X(i){ return x0 + (x1 - x0) * (series.length === 1 ? 0.5 : i / (series.length - 1)); }
+  /* gridlines */
+  ctx.strokeStyle = "#23395e"; ctx.lineWidth = 1;
+  for (var g = 0; g <= 4; g++){
+    var gy = y0 - (y0 - y1) * g / 4;
+    ctx.beginPath(); ctx.moveTo(x0, gy); ctx.lineTo(x1, gy); ctx.stroke();
+    ctx.fillStyle = "#9fb0c7"; ctx.font = "11px sans-serif"; ctx.textAlign = "left";
+    ctx.fillText(fmt(max * g / 4 / 1.05), x0 + 4, gy - 4);
+  }
+  /* deposited area (green) */
+  ctx.beginPath(); ctx.moveTo(X(0), y0);
+  series.forEach(function(v, i){ ctx.lineTo(X(i), y0 - (y0 - y1) * (deposited * (i + 1) / series.length) / max); });
+  ctx.lineTo(X(series.length - 1), y0); ctx.closePath();
+  ctx.fillStyle = "rgba(47,191,143,.22)"; ctx.fill();
+  /* balance line (gold) */
+  ctx.beginPath();
+  series.forEach(function(v, i){ var x = X(i), y = y0 - (y0 - y1) * v / max; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+  ctx.strokeStyle = "#f0c94a"; ctx.lineWidth = 2.5; ctx.stroke();
+  /* end dot */
+  var ex = X(series.length - 1), ey = y0 - (y0 - y1) * series[series.length - 1] / max;
+  ctx.beginPath(); ctx.arc(ex, ey, 4, 0, Math.PI * 2); ctx.fillStyle = "#f0c94a"; ctx.fill();
+  ctx.fillStyle = "#9fb0c7"; ctx.font = "11px sans-serif"; ctx.textAlign = "left";
+  ctx.fillText("Month 1", x0, H - 6);
+  ctx.textAlign = "right";
+  ctx.fillText("Month " + series.length, x1, H - 6);
+}
+
+/* ---------- Bank comparison ---------- */
+var BANKS = [
+  { name:"Islami Bank Bangladesh", fd:10.00, dps:null },
+  { name:"IFIC Bank",              fd:8.50,  dps:null },
+  { name:"Dutch-Bangla Bank (DBBL)", fd:7.20, dps:8.50 },
+  { name:"BRAC Bank",              fd:7.50,  dps:7.00 },
+  { name:"Sonali Bank",            fd:7.10,  dps:null },
+  { name:"ONE Bank",               fd:null,  dps:10.00 }
+];
+function calcCompare(){
+  var amount = num("cmpAmount", 100000);
+  var months = monthsOf("cmpTenure", "cmpTenureUnit");
+  var mode = $("cmpMode").value;
+  var rows = [];
+  BANKS.forEach(function(b){
+    var rate = mode === "fd" ? b.fd : b.dps;
+    if (rate == null) return;
+    var maturity, interest;
+    if (mode === "fd"){
+      maturity = amount * Math.pow(1 + rate / 100, months / 12);
+    } else {
+      var s = dpsSeries(amount, rate, months);
+      maturity = s.length ? s[s.length - 1] : 0;
+    }
+    interest = maturity - (mode === "fd" ? amount : amount * months);
+    rows.push({ name:b.name, rate:rate, maturity:maturity, interest:interest });
+  });
+  rows.sort(function(a, b){ return b.maturity - a.maturity; });
+  var tb = document.querySelector("#cmpTable tbody");
+  tb.innerHTML = "";
+  rows.forEach(function(r, i){
+    var tr = document.createElement("tr");
+    if (i === 0) tr.className = "best";
+    tr.innerHTML = "<td>" + (i + 1) + "</td><td><b>" + r.name + "</b>" +
+      (i === 0 ? '<span class="tag">BEST</span>' : "") + "</td><td class='rate'>" +
+      r.rate.toFixed(2) + "%</td><td>" + fmt(r.maturity) + "</td><td>" + fmt(r.interest) + "</td>";
+    tb.appendChild(tr);
+  });
+  $("cmpResult").classList.add("show");
+  return rows;
+}
+
+/* ---------- History (localStorage, fdbd_ prefix) ---------- */
+var HIST_KEY = "fdbd_history";
+function loadHistory(){
+  try { return JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); } catch (e){ return []; }
+}
+function saveHistory(list){
+  try { localStorage.setItem(HIST_KEY, JSON.stringify(list)); } catch (e){}
+}
+function saveCurrent(kind){
+  var rec = kind === "fd" ? (lastFD || calcFD()) : (lastDPS || calcDPS());
+  if (!rec) return;
+  var list = loadHistory();
+  list.unshift({
+    id: Date.now(), type: rec.type, amount: rec.amount, rate: rec.rate,
+    months: rec.months, maturity: rec.maturity, interest: rec.interest,
+    date: new Date().toLocaleString("en-GB")
+  });
+  list = list.slice(0, 20);
+  saveHistory(list);
+  renderHistory();
+}
+function renderHistory(){
+  var list = loadHistory(), box = $("histList");
+  box.innerHTML = "";
+  if (!list.length){
+    box.innerHTML = '<p class="empty">No saved calculations yet. Run a calculation and tap “Save this calculation”.</p>';
+    return;
+  }
+  list.forEach(function(h){
+    var div = document.createElement("div");
+    div.className = "hist-item";
+    div.innerHTML = '<div class="t"><b>' + h.type + '</b> · ' + fmt(h.amount) +
+      (h.type === "DPS" ? "/month" : "") + ' · ' + h.rate.toFixed(2) + '% · ' + h.months + ' mo' +
+      '<small>' + h.date + ' · Interest ' + fmt(h.interest) + '</small></div>' +
+      '<div class="amt">' + fmt(h.maturity) + '</div>' +
+      '<div class="acts"><button class="icon-btn" data-load="' + h.id + '">Reload</button>' +
+      '<button class="icon-btn" data-del="' + h.id + '">Delete</button></div>';
+    box.appendChild(div);
+  });
+  box.querySelectorAll("[data-load]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var h = loadHistory().find(function(x){ return x.id == b.dataset.load; });
+      if (!h) return;
+      if (h.type === "FD"){
+        showTab("fd");
+        $("fdAmount").value = h.amount; $("fdRate").value = h.rate;
+        $("fdTenure").value = h.months; $("fdTenureUnit").value = "months";
+        calcFD();
+      } else {
+        showTab("dps");
+        $("dpsMonthly").value = h.amount; $("dpsRate").value = h.rate;
+        $("dpsTenure").value = h.months; $("dpsTenureUnit").value = "months";
+        calcDPS();
+      }
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  });
+  box.querySelectorAll("[data-del]").forEach(function(b){
+    b.addEventListener("click", function(){
+      saveHistory(loadHistory().filter(function(x){ return x.id != b.dataset.del; }));
+      renderHistory();
+    });
+  });
+}
+function clearHistory(){ saveHistory([]); renderHistory(); }
+renderHistory();
+
+/* ---------- Self-test hook: ?test=1 drives the real UI and writes #testout ---------- */
+if (/[?&]test=1/.test(location.search)){
+  window.addEventListener("load", function(){
+    setTimeout(function(){
+      var out = {};
+      try {
+        /* FD case: 100,000 @ 8%, 12 months, annual compounding */
+        $("fdAmount").value = 100000; $("fdRate").value = 8;
+        $("fdTenure").value = 12; $("fdTenureUnit").value = "months";
+        var fd = calcFD();
+        out.fd_maturity = Math.round(fd.maturity);
+        out.fd_interest = Math.round(fd.interest);
+        out.fd_after_tax = Math.round(fd.afterTax);
+        /* DPS case: 5,000/month @ 8%, 12 months */
+        showTab("dps");
+        $("dpsMonthly").value = 5000; $("dpsRate").value = 8;
+        $("dpsTenure").value = 12; $("dpsTenureUnit").value = "months";
+        var dps = calcDPS();
+        out.dps_maturity = Math.round(dps.maturity * 100) / 100;
+        out.dps_deposited = dps.deposited;
+        out.dps_interest = Math.round(dps.interest * 100) / 100;
+        /* Compare: FD 100,000 / 12 months */
+        showTab("compare");
+        $("cmpAmount").value = 100000; $("cmpTenure").value = 12;
+        $("cmpTenureUnit").value = "months"; $("cmpMode").value = "fd";
+        var rows = calcCompare();
+        out.compare_order = rows.map(function(r){ return r.name + ":" + Math.round(r.maturity); });
+        out.compare_sorted = rows.every(function(r, i){ return i === 0 || rows[i-1].maturity >= r.maturity; });
+        /* History persistence */
+        showTab("fd"); calcFD(); saveCurrent("fd");
+        out.history_count = loadHistory().length;
+        out.history_first_maturity = loadHistory()[0] ? Math.round(loadHistory()[0].maturity) : null;
+        /* Layout */
+        out.scrollWidth = document.documentElement.scrollWidth;
+        out.innerWidth = window.innerWidth;
+        out.overflow360 = document.documentElement.scrollWidth > window.innerWidth;
+        out.errors = window.__errors || [];
+        out.fmt_check = fmt(100000);
+      } catch (e){ out.exception = String(e); }
+      $("testout").textContent = "TESTOUT " + JSON.stringify(out);
+    }, 1200);
+  });
+}
+window.addEventListener("error", function(e){
+  (window.__errors = window.__errors || []).push(String(e.message));
+});
+</script>
+</body>
+</html>
